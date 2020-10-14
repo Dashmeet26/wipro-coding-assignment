@@ -25,7 +25,7 @@ class InfoTableViewCell: UITableViewCell {
         titleLabel.numberOfLines = 0
         
         descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
-        descriptionLabel.font = UIFont.systemFont(ofSize: 20)
+        descriptionLabel.font = UIFont.systemFont(ofSize: 16)
         descriptionLabel.numberOfLines = 0
         
         logoImage.translatesAutoresizingMaskIntoConstraints = false
@@ -45,6 +45,7 @@ class InfoTableViewCell: UITableViewCell {
             logoImage.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             logoImage.trailingAnchor.constraint(equalTo: titleLabel.leadingAnchor, constant: -20),
             logoImage.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
+            logoImage.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -20),
             logoImage.heightAnchor.constraint(equalToConstant: 75),
             logoImage.widthAnchor.constraint(equalToConstant: 75)
         ])

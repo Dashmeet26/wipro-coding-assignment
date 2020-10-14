@@ -8,14 +8,18 @@
 
 import UIKit
 
+import SDWebImage
+
 class HomeViewController: UIViewController {
     
     let tableView = UITableView()
     var safeArea: UILayoutGuide!
     
+    var tableData = [DescriptionData]()
+    
+    
     override func loadView() {
         super.loadView()
-        self.title = "Title"
         
         // conforming to table view delegates
         tableView.delegate = self
@@ -59,8 +63,22 @@ class HomeViewController: UIViewController {
             if let err = error {
                 self.showError(alertTitle: "Error" , message: err.localizedDescription)
             }
-            else if let data = data {
+            else if let response = data {
                 
+                do {
+                    let responseData = try JSONDecoder().decode(HeaderData.self, from: response)
+                    
+                    DispatchQueue.main.async {
+                        self.title = responseData.title
+                        self.tableData = responseData.rows
+                        
+                        self.tableView.reloadData()
+                    }
+                    
+                }
+                catch {
+                    
+                }
                 
             }
             
@@ -72,15 +90,26 @@ class HomeViewController: UIViewController {
 
 extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 10
+        return self.tableData.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! InfoTableViewCell
-        cell.titleLabel.text = ""
-        cell.logoImage.image = UIImage.init(named: "")
-        cell.descriptionLabel.text = ""
+       
+        cell.titleLabel.text = self.tableData[indexPath.row].title ?? "Title not available"
+       
+        cell.logoImage.sd_setImage(with: URL(string: self.tableData[indexPath.row].imageHref ?? ""), placeholderImage:nil, completed: { (image, error, cacheType, url) -> Void in
+            if ((error) != nil) {
+                // set the placeholder image
+                cell.logoImage.image = UIImage.init(named: "no-image-available")
+            } else {
+                // success ... use the image
+                cell.logoImage.image = image
+            }
+        })
+        
+        cell.descriptionLabel.text = self.tableData[indexPath.row].description ?? "Description not available"
         
         cell.setNeedsUpdateConstraints()
         cell.updateConstraintsIfNeeded()

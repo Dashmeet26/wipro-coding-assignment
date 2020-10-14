@@ -49,7 +49,7 @@ class NetworkManager: NSObject {
     }
     
     // GET request
-    func makeGetRequestFor(url: String, completion: @escaping((URLResponse?, Error?, [String:Any]?)->Void)) {
+    func makeGetRequestFor(url: String, completion: @escaping((URLResponse?, Error?, Data?)->Void)) {
         
         if isInternetAvailable {
             operationQueue.addOperation {
@@ -68,23 +68,19 @@ class NetworkManager: NSObject {
                 
                 // create urlsession task
                 let task = self.session.dataTask(with: req) { (data, res, err) in
-                    if let data1 = data {
+                    if let apiData = data {
                         
                         do {
-                            let strISOLatin = String(data: data1, encoding: .isoLatin1)
+                            let strISOLatin = String(data: apiData, encoding: .isoLatin1)
                             let dataUTF8 = strISOLatin?.data(using: .utf8)
-                            
-                            let jsonData = try JSONSerialization.jsonObject(with: dataUTF8!, options: .mutableContainers) as? [String:Any]
                             
                             let headers = (res as? HTTPURLResponse)?.allHeaderFields
                             
                             self.set_cookie = headers?["Set-Cookie"] as? String ?? ""
                             self.xcsrf_token = headers?["x-csrf-token"] as? String ?? ""
                             
-                            completion(res,err,jsonData)
+                            completion(res,err,dataUTF8)
                             
-                        } catch {
-                            completion(res, error, nil)
                         }
                         
                     } else {
