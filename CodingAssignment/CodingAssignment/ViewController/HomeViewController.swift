@@ -16,7 +16,7 @@ class HomeViewController: UIViewController {
     var safeArea: UILayoutGuide!
     
     var tableData = [DescriptionData]()
-    
+    private let refreshControl = UIRefreshControl()
     
     override func loadView() {
         super.loadView()
@@ -25,13 +25,31 @@ class HomeViewController: UIViewController {
         tableView.delegate = self
         tableView.dataSource = self
         
+        // Configure Refresh Control
+        refreshControl.addTarget(self, action: #selector(refreshWeatherData(_:)), for: .valueChanged)
+        refreshControl.tintColor = UIColor(red:0.25, green:0.72, blue:0.85, alpha:1.0)
+        refreshControl.attributedTitle = NSAttributedString(string: "Fetching Data ...", attributes: nil)
+        
+        // setup tableview
         setupTableView()
         
         // Api call
         makeRequestForData()
     }
     
+    @objc private func refreshWeatherData(_ sender: Any) {
+        // Api call
+        makeRequestForData()
+    }
+    
     func setupTableView() {
+        
+        // Add Refresh Control to Table View
+        if #available(iOS 10.0, *) {
+            tableView.refreshControl = refreshControl
+        } else {
+            tableView.addSubview(refreshControl)
+        }
         
         // setting up for auto cell size
         tableView.estimatedRowHeight = 200
@@ -73,22 +91,20 @@ class HomeViewController: UIViewController {
                         self.tableData = responseData.rows
                         
                         self.tableView.reloadData()
+                        self.refreshControl.endRefreshing()
                     }
                     
                 }
                 catch {
-                    
+                    self.showError(alertTitle: "Error" , message: "Data parsing error")
                 }
-                
             }
-            
         }
-        
     }
-    
 }
 
 extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return self.tableData.count
     }
@@ -117,10 +133,6 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         return cell
     }
     
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return UITableView.automaticDimension
-    }
-    
     // shows an UIAlertController alert with error title and message
     func showError(alertTitle title: String, message: String? = nil) {
         if !Thread.current.isMainThread {
@@ -129,6 +141,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             }
             return
         }
+        
         let controller = UIAlertController(title: title, message: message, preferredStyle: .alert)
         controller.view.tintColor = UIWindow.appearance().tintColor
         controller.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .cancel, handler: nil))
