@@ -15,7 +15,9 @@ class HomeViewController: UIViewController {
     let tableView = UITableView()
     var safeArea: UILayoutGuide!
     
+    // array to store table data
     var tableData = [DescriptionData]()
+    
     private let refreshControl = UIRefreshControl()
     
     override func loadView() {
