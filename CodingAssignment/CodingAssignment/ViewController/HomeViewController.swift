@@ -15,13 +15,17 @@ class HomeViewController: UIViewController {
     let tableView = UITableView()
     var safeArea: UILayoutGuide!
     
-    // array to store table data
-    var tableData = [DescriptionData]()
+    // ViewModel
+    var viewModel = InfoViewModel()
     
     private let refreshControl = UIRefreshControl()
     
     override func loadView() {
         super.loadView()
+        
+        viewModel.navTitle = self.title ?? EMPTY_STRING
+        viewModel.tableView = self.tableView
+        viewModel.refreshControl = self.refreshControl
         
         // conforming to table view delegates
         tableView.delegate = self
@@ -30,18 +34,31 @@ class HomeViewController: UIViewController {
         // Configure Refresh Control
         refreshControl.addTarget(self, action: #selector(refreshWeatherData(_:)), for: .valueChanged)
         refreshControl.tintColor = UIColor(red:0.25, green:0.72, blue:0.85, alpha:1.0)
-        refreshControl.attributedTitle = NSAttributedString(string: "Fetching Data ...", attributes: nil)
+        refreshControl.attributedTitle = NSAttributedString(string: FETCH_DATA, attributes: nil)
         
         // setup tableview
         setupTableView()
         
         // Api call
-        makeRequestForData()
+        self.apiCall()
     }
     
     @objc private func refreshWeatherData(_ sender: Any) {
+        
+        self.apiCall()
+    }
+    
+    func apiCall() {
         // Api call
-        makeRequestForData()
+        if (!viewModel.makeRequestForData()) {
+            if NetworkManager.sharedHandler.isInternetAvailable {
+                self.showError(alertTitle: ERROR , message: DATA_ERROR)
+            } else {
+                self.showError(alertTitle: NETWORK_ERROR , message: CHECK_INTERNET)
+            }
+        } else {
+            self.title = viewModel.navTitle
+        }
     }
     
     func setupTableView() {
@@ -54,7 +71,7 @@ class HomeViewController: UIViewController {
         }
         
         // setting up for auto cell size
-        tableView.estimatedRowHeight = 200
+        tableView.estimatedRowHeight = CGFloat(ESTIMATE_ROW_HEIGHT)
         tableView.rowHeight = UITableView.automaticDimension
         
         // setting up table footerview
@@ -74,50 +91,21 @@ class HomeViewController: UIViewController {
         tableView.register(InfoTableViewCell.self, forCellReuseIdentifier: "cell")
     }
     
-    func makeRequestForData() {
-        
-        let infoUrl = "https://dl.dropboxusercontent.com/s/2iodh4vg0eortkl/facts.json"
-        
-        NetworkManager.sharedHandler.makeGetRequestFor(url: infoUrl) { (res, error, data) in
-            
-            if let err = error {
-                self.showError(alertTitle: "Error" , message: err.localizedDescription)
-            }
-            else if let response = data {
-                
-                do {
-                    let responseData = try JSONDecoder().decode(HeaderData.self, from: response)
-                    
-                    DispatchQueue.main.async {
-                        self.title = responseData.title
-                        self.tableData = responseData.rows
-                        
-                        self.tableView.reloadData()
-                        self.refreshControl.endRefreshing()
-                    }
-                    
-                }
-                catch {
-                    self.showError(alertTitle: "Error" , message: "Data parsing error")
-                }
-            }
-        }
-    }
 }
 
 extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.tableData.count
+        return self.viewModel.tableData.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! InfoTableViewCell
-       
-        cell.titleLabel.text = self.tableData[indexPath.row].title ?? "Title not available"
-       
-        cell.logoImage.sd_setImage(with: URL(string: self.tableData[indexPath.row].imageHref ?? ""), placeholderImage:nil, completed: { (image, error, cacheType, url) -> Void in
+        
+        cell.titleLabel.text = self.viewModel.tableData[indexPath.row].title ?? TITLE_EMPTY
+        
+        cell.logoImage.sd_setImage(with: URL(string: self.viewModel.tableData[indexPath.row].imageHref ?? ""), placeholderImage:nil, completed: { (image, error, cacheType, url) -> Void in
             if ((error) != nil) {
                 // set the placeholder image
                 cell.logoImage.image = UIImage.init(named: "no-image-available")
@@ -127,7 +115,9 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             }
         })
         
-        cell.descriptionLabel.text = self.tableData[indexPath.row].description ?? "Description not available"
+        cell.descriptionLabel.text = self.viewModel.tableData[indexPath.row].description ?? DESCRIPTION_EMPTY
+        
+        self.title = viewModel.navTitle
         
         cell.setNeedsUpdateConstraints()
         cell.updateConstraintsIfNeeded()
@@ -135,18 +125,4 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         return cell
     }
     
-    // shows an UIAlertController alert with error title and message
-    func showError(alertTitle title: String, message: String? = nil) {
-        if !Thread.current.isMainThread {
-            DispatchQueue.main.async { [weak self] in
-                self?.showError(alertTitle: title, message: message)
-            }
-            return
-        }
-        
-        let controller = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        controller.view.tintColor = UIWindow.appearance().tintColor
-        controller.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .cancel, handler: nil))
-        present(controller, animated: true, completion: nil)
-    }
 }

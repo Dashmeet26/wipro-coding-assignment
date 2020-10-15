@@ -6,8 +6,6 @@
 //  Copyright © 2020 FT User. All rights reserved.
 //
 
-import UIKit
-
 
 struct HeaderData: Decodable {
     let title: String?

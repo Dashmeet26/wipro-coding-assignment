@@ -10,10 +10,10 @@ import UIKit
 
 class NetworkManager: NSObject {
     
-    var authorizationCookie = ""
+    var authorizationCookie = EMPTY_STRING
     var operationQueue = OperationQueue.init()
-    var xcsrf_token = ""
-    var set_cookie = ""
+    var xcsrf_token = EMPTY_STRING
+    var set_cookie = EMPTY_STRING
     var session:URLSession!
     
     static let sharedHandler = NetworkManager.init()
@@ -44,7 +44,7 @@ class NetworkManager: NSObject {
     // Error message in case of Internet connectivity issues
     func prepareErrorForNoInterNet() -> NSError {
         
-        let error = NSError.init(domain: "Network error", code: 404, userInfo: [ NSLocalizedDescriptionKey: "Please check your network connectivity"])
+        let error = NSError.init(domain: NETWORK_ERROR, code: 404, userInfo: [NSLocalizedDescriptionKey: CHECK_INTERNET])
         return error
     }
     
