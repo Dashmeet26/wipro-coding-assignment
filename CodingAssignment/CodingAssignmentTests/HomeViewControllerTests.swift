@@ -12,6 +12,7 @@ import XCTest
 class HomeViewControllerTests: XCTestCase {
     
     var viewControllerUnderTest = HomeViewController()
+    var viewModel = InfoViewModel()
     let tableView = UITableView()
     
     override func setUpWithError() throws {
@@ -22,7 +23,7 @@ class HomeViewControllerTests: XCTestCase {
 
         for number in 0..<20 {
             let data = DescriptionData.init(title: "\(number)", description: "\(number)", imageHref: "\(number)")
-            viewControllerUnderTest.tableData.append(data)
+            viewModel.tableData.append(data)
         }
         
     }
@@ -56,13 +57,13 @@ class HomeViewControllerTests: XCTestCase {
     
     //Mark :- test case to test data count in tableview
     func testDataSource() {
-        XCTAssertEqual(viewControllerUnderTest.tableData.count, 20,
+        XCTAssertEqual(viewModel.tableData.count, 20,
                        "DataSource should have correct number of data")
     }
     
     //Mark :- test case to test TableView should have zero sections when no data is present
-    func testHasZeroSectionsWhenZeroKittens() {
-        viewControllerUnderTest.tableData = []
+    func testHasZeroSections() {
+        viewModel.tableData = []
 
         XCTAssertEqual(viewControllerUnderTest.tableView.numberOfSections, 0,
                        "TableView should have zero sections when no data is present")
@@ -74,8 +75,7 @@ class HomeViewControllerTests: XCTestCase {
         let pass = expectation(description: "Waiting for api call")
         
         // Make call for api
-        let infoUrl = "https://dl.dropboxusercontent.com/s/2iodh4vg0eortkl/facts.json"
-        NetworkManager.sharedHandler.makeGetRequestFor(url: infoUrl) { (res, error, data) in
+        NetworkManager.sharedHandler.makeGetRequestFor(url: INFO_URL) { (res, error, data) in
             
             // check is error is nil or not, If not error fail the test.
             XCTAssert(error == nil, "failed with error \(error?.localizedDescription ?? "")")
@@ -109,6 +109,11 @@ class HomeViewControllerTests: XCTestCase {
         }
         // wait for the expression
         wait(for: [pass], timeout: 60)
+    }
+    
+    
+    func testInternetConnection() {
+        XCTAssert(NetworkManager.sharedHandler.isInternetAvailable, "No internet available") 
     }
     
     func testPerformanceExample() throws {

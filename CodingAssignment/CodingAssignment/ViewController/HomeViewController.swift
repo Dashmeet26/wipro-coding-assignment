@@ -32,7 +32,7 @@ class HomeViewController: UIViewController {
         tableView.dataSource = self
         
         // Configure Refresh Control
-        refreshControl.addTarget(self, action: #selector(refreshWeatherData(_:)), for: .valueChanged)
+        refreshControl.addTarget(self, action: #selector(refreshInfoData(_:)), for: .valueChanged)
         refreshControl.tintColor = UIColor(red:0.25, green:0.72, blue:0.85, alpha:1.0)
         refreshControl.attributedTitle = NSAttributedString(string: FETCH_DATA, attributes: nil)
         
@@ -43,7 +43,7 @@ class HomeViewController: UIViewController {
         self.apiCall()
     }
     
-    @objc private func refreshWeatherData(_ sender: Any) {
+    @objc private func refreshInfoData(_ sender: Any) {
         
         self.apiCall()
     }
